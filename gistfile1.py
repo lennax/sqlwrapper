@@ -72,7 +72,7 @@ class Query(object):
         try:
             curs.execute(self.sql)
             self.end_time = datetime.datetime.now()
-        
+
             columns = [i[0] for i in curs.description]
             rows = []
 
@@ -86,7 +86,7 @@ class Query(object):
             query["run_date"] = self.end_time
             query["run_time"] = self.delta_to_seconds(self.end_time - self.start_time)
             query["total_rows"] = curs.rowcount
-            
+
             x = json.dumps(query, cls=JSONCustomEncoder)
 
             return x
@@ -96,26 +96,26 @@ class Query(object):
             self.end_time = datetime.datetime.now()
 
             raise e
-            
+
     def exec_update(self, conn):
         self.start_time = datetime.datetime.now()
         try:
             curs = conn.cursor()
             curs.execute(self.sql)
             self.end_time = datetime.datetime.now()
-        
+
             return curs.rowcount
         except Exception, e:
             self.end_time = datetime.datetime.now()
             self.error = str(e)
             raise e
-            
+
     @staticmethod
     def bind(a):
         if a is None:
             return ""
         return str(a).replace("'", "''")
-    
+
     @staticmethod
     def delta_to_seconds(dt):
         d = decimal.Decimal(dt.days * 24 * 3600)
@@ -123,38 +123,38 @@ class Query(object):
         d = d + (decimal.Decimal(dt.microseconds) / 1000000)
 
         return str(d)
-    
+
 
 class DBConnection(object):
-            
+
     def __init__(self, conn):
         self.conn = conn
         self.query_list = []
-        
+
     def __str__(self):
         return str(self.conn)
-    
+
     def commit(self):
         return self.conn.commit()
-        
+
     def rollback(self):
         return self.conn.rollback()
-    
+
     def close(self):
         return self.conn.close()
-    
+
     def select(self, from_clause, where=None, order=None,
                select_list=None, return_type='dict'):
         select_clause = " * "
         if select_list:
             select_clause = ", ".join(select_list)
-        
+
         order_by_clause = ""
         if order:
             order_by_clause = " order by " + order
 
         query = "select %s from %s %s %s" % (select_clause, from_clause, self.where_clause(where), order_by_clause)
-        
+
         q = Query(query)
         self.query_list.append(q)
 
@@ -175,28 +175,28 @@ class DBConnection(object):
         set_clause = ", ".join(["%s = '%s'" % (x, Query.bind(set_list[x])) for x in set_list.keys()])
 
         query = "update %s set %s %s" % (from_clause, set_clause, self.where_clause(where))
-        
+
         q = Query(query)
         self.query_list.append(q)
-        
+
         return q.exec_update(self.conn)
-    
+
     def update_sql(self, sql):
         q = Query(sql)
         self.query_list.append(q)
-        
+
         return q.exec_update(self.conn)
-    
+
     def insert(self, from_clause, columns):
         column_list = ", ".join(columns.keys())
         value_list = "', '".join([Query.bind(columns[x]) for x in columns.keys()])
         query = "insert into %s (%s) values ('%s')" % (from_clause, column_list, value_list)
-        
+
         q = Query(query)
         self.query_list.append(q)
-        
+
         return q.exec_update(self.conn)
-    
+
     def upsert(self, from_clause, set_list, where):
         x = self.update(from_clause, set_list, where)
         if x == 0 and isinstance(where, dict):
@@ -204,14 +204,14 @@ class DBConnection(object):
         elif x == 0:
             x = self.insert(from_clause, set_list)
         return x
-        
+
     def delete(self, from_clause, where):
         query = "delete from %s %s" % (from_clause, self.where_clause(where))
         q = Query(query)
         self.query_list.append(q)
-        
+
         return q.exec_update(self.conn)
-    
+
     @staticmethod
     def where_clause(where):
         if not where:
