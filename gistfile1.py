@@ -2,6 +2,7 @@ import datetime
 import json
 import decimal
 
+
 class JSONCustomEncoder(json.JSONEncoder):
     """Encodes dates with ISO formatting"""
     def default(self, obj):
@@ -10,32 +11,37 @@ class JSONCustomEncoder(json.JSONEncoder):
         else:
             return json.JSONEncoder.default(self, obj)
 
+
 class Query(object):
     def __init__(self, sql):
         self.sql = sql
         self.start_time = None
         self.end_time = None
         self.error = None
-        
+
     def __str__(self):
         return self.sql
 
-    def exec_select(self, conn, return_type ='dict'):
-        """Returns the value of the SQL as a generator as either a dict or result set."""
+    def exec_select(self, conn, return_type='dict'):
+        """
+        Returns the value of the SQL as a generator as either a dict or result
+        set.
+
+        """
         self.start_time = datetime.datetime.now()
         try:
             curs = conn.cursor()
             curs.execute(self.sql)
             self.end_time = datetime.datetime.now()
-    
+
             cols = [x[0].lower() for x in curs.description]
             while(True):
                 results = curs.fetchmany(25)
                 if not results:
                     break
                 for r in results:
-                    if return_type  == 'dict':
-                        yield dict(zip(cols,r))
+                    if return_type == 'dict':
+                        yield dict(zip(cols, r))
                     if return_type == 'rset':
                         yield r
         except Exception, e:
@@ -47,10 +53,10 @@ class Query(object):
         """ Turns a result set into a JSON object.
         Output looks like this:
         {
-            "rows": [[17, "Cally's War (Posleen War Series #5)", "John Ringo, Julie Cochrane", "141652052X", "Baen"], 
-                    [19, "Last Chance to See", "Douglas Adams, Mark Carwardine", "0345371984", "Ballantine Books"], 
-                    [20, "Dirk Gently's Holistic Detective Agency", "Douglas Adams", "0671746723", "Pocket"], 
-                    [21, "The Long Dark Tea-Time of the Soul", "Douglas Adams", "0671742515", "Pocket Books"], 
+            "rows": [[17, "Cally's War (Posleen War Series #5)", "John Ringo, Julie Cochrane", "141652052X", "Baen"],
+                    [19, "Last Chance to See", "Douglas Adams, Mark Carwardine", "0345371984", "Ballantine Books"],
+                    [20, "Dirk Gently's Holistic Detective Agency", "Douglas Adams", "0671746723", "Pocket"],
+                    [21, "The Long Dark Tea-Time of the Soul", "Douglas Adams", "0671742515", "Pocket Books"],
                     [26, "So Long, and Thanks for All the Fish", "Douglas Adams", "0345479963", "Del Rey"]],
             "total_rows": 5,
             "run_time": "0.002321",
@@ -59,10 +65,10 @@ class Query(object):
             "columns": ["id", "title", "author", "asin", "publisher"]
         }
         """
-        
+
         curs = conn.cursor()
         self.start_time = datetime.datetime.now()
-        query = {"sql":self.sql, "run_date":self.start_time}
+        query = {"sql": self.sql, "run_date": self.start_time}
         try:
             curs.execute(self.sql)
             self.end_time = datetime.datetime.now()
@@ -81,17 +87,16 @@ class Query(object):
             query["run_time"] = self.delta_to_seconds(self.end_time - self.start_time)
             query["total_rows"] = curs.rowcount
             
-            
-            x = json.dumps(query,cls=JSONCustomEncoder)
+            x = json.dumps(query, cls=JSONCustomEncoder)
 
             return x
+
         except Exception, e:
             self.error = str(e)
             self.end_time = datetime.datetime.now()
 
             raise e
             
-
     def exec_update(self, conn):
         self.start_time = datetime.datetime.now()
         try:
@@ -107,7 +112,7 @@ class Query(object):
             
     @staticmethod
     def bind(a):
-        if a == None:
+        if a is None:
             return ""
         return str(a).replace("'", "''")
     
@@ -119,6 +124,7 @@ class Query(object):
 
         return str(d)
     
+
 class DBConnection(object):
             
     def __init__(self, conn):
@@ -137,8 +143,9 @@ class DBConnection(object):
     def close(self):
         return self.conn.close()
     
-    def select(self, from_clause, where = None, order = None, select_list = None, return_type='dict'):
-        select_clause =  " * "
+    def select(self, from_clause, where=None, order=None,
+               select_list=None, return_type='dict'):
+        select_clause = " * "
         if select_list:
             select_clause = ", ".join(select_list)
         
@@ -150,13 +157,13 @@ class DBConnection(object):
         
         q = Query(query)
         self.query_list.append(q)
-        
+
         if return_type == 'json':
             return q.exec_select_json(self.conn)
         else:
             return q.exec_select(self.conn, return_type)
 
-    def select_sql(self, sql, return_type = 'dict'):
+    def select_sql(self, sql, return_type='dict'):
         q = Query(sql)
         self.query_list.append(q)
         if return_type == 'json':
@@ -192,7 +199,7 @@ class DBConnection(object):
     
     def upsert(self, from_clause, set_list, where):
         x = self.update(from_clause, set_list, where)
-        if x == 0 and type(where) == type({}):
+        if x == 0 and isinstance(where, dict):
             x = self.insert(from_clause, set_list.update(where))
         elif x == 0:
             x = self.insert(from_clause, set_list)
@@ -210,8 +217,8 @@ class DBConnection(object):
         if not where:
             return ""
 
-        if type(where) == type({}):
+        if isinstance(where, dict):
             return " where " + " and ".join(["%s = '%s'" % (x, Query.bind(where[x])) for x in where.keys()])
 
-        if type(where) == type(""):
+        if isinstance(where, basestring):
             return " where " + where
