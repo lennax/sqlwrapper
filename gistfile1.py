@@ -10,7 +10,7 @@ class JSONCustomEncoder(json.JSONEncoder):
         else:
             return json.JSONEncoder.default(self, obj)
 
-class Query():
+class Query(object):
     def __init__(self, sql):
         self.sql = sql
         self.start_time = None
@@ -119,7 +119,7 @@ class Query():
 
         return str(d)
     
-class DBConnection():
+class DBConnection(object):
             
     def __init__(self, conn):
         self.conn = conn
