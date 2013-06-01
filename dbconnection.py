@@ -174,8 +174,8 @@ class DBConnection(object):
             return q.exec_select(self.conn, return_type)
 
     def update(self, from_clause, set_list, where):
-        set_clause = ", ".join(["%s = '%s'" % (x, Query.bind(set_list[x]))
-                                for x in set_list.keys()])
+        set_clause = ", ".join(["%s = '%s'" % (k, Query.bind(v))
+                                for k, v in set_list.iteritems()])
 
         query = "update %s set %s %s" % (from_clause, set_clause,
                                          self.where_clause(where))
@@ -192,8 +192,7 @@ class DBConnection(object):
 
     def insert(self, from_clause, columns):
         column_list = ", ".join(columns.keys())
-        value_list = "', '".join([Query.bind(columns[x])
-                                  for x in columns.keys()])
+        value_list = "', '".join([Query.bind(v) for v in columns.values()])
         query = "insert into %s (%s) values ('%s')" % (from_clause,
                                                        column_list, value_list)
 
@@ -223,9 +222,8 @@ class DBConnection(object):
             return ""
 
         if isinstance(where, dict):
-            return " where " + " and ".join(["%s = '%s'" % (x,
-                                             Query.bind(where[x]))
-                                             for x in where.keys()])
+            return " where " + " and ".join(["%s = '%s'" % (k, Query.bind(v))
+                                             for k, v in where.iteritems()])
 
         if isinstance(where, basestring):
             return " where " + where
