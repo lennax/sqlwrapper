@@ -84,7 +84,8 @@ class Query(object):
             query["columns"] = columns
             query["rows"] = rows
             query["run_date"] = self.end_time
-            query["run_time"] = self.delta_to_seconds(self.end_time - self.start_time)
+            query["run_time"] = self.delta_to_seconds(self.end_time
+                                                      - self.start_time)
             query["total_rows"] = curs.rowcount
 
             x = json.dumps(query, cls=JSONCustomEncoder)
@@ -153,8 +154,9 @@ class DBConnection(object):
         if order:
             order_by_clause = " order by " + order
 
-        query = "select %s from %s %s %s" % (select_clause, from_clause, self.where_clause(where), order_by_clause)
-
+        query = "select %s from %s %s %s" % (select_clause, from_clause,
+                                             self.where_clause(where),
+                                             order_by_clause)
         q = Query(query)
         self.query_list.append(q)
 
@@ -172,10 +174,11 @@ class DBConnection(object):
             return q.exec_select(self.conn, return_type)
 
     def update(self, from_clause, set_list, where=None):
-        set_clause = ", ".join(["%s = '%s'" % (x, Query.bind(set_list[x])) for x in set_list.keys()])
+        set_clause = ", ".join(["%s = '%s'" % (x, Query.bind(set_list[x]))
+                                for x in set_list.keys()])
 
-        query = "update %s set %s %s" % (from_clause, set_clause, self.where_clause(where))
-
+        query = "update %s set %s %s" % (from_clause, set_clause,
+                                         self.where_clause(where))
         q = Query(query)
         self.query_list.append(q)
 
@@ -189,8 +192,10 @@ class DBConnection(object):
 
     def insert(self, from_clause, columns):
         column_list = ", ".join(columns.keys())
-        value_list = "', '".join([Query.bind(columns[x]) for x in columns.keys()])
-        query = "insert into %s (%s) values ('%s')" % (from_clause, column_list, value_list)
+        value_list = "', '".join([Query.bind(columns[x])
+                                  for x in columns.keys()])
+        query = "insert into %s (%s) values ('%s')" % (from_clause,
+                                                       column_list, value_list)
 
         q = Query(query)
         self.query_list.append(q)
@@ -218,7 +223,9 @@ class DBConnection(object):
             return ""
 
         if isinstance(where, dict):
-            return " where " + " and ".join(["%s = '%s'" % (x, Query.bind(where[x])) for x in where.keys()])
+            return " where " + " and ".join(["%s = '%s'" % (x,
+                                             Query.bind(where[x]))
+                                             for x in where.keys()])
 
         if isinstance(where, basestring):
             return " where " + where
