@@ -173,7 +173,7 @@ class DBConnection(object):
         else:
             return q.exec_select(self.conn, return_type)
 
-    def update(self, from_clause, set_list, where=None):
+    def update(self, from_clause, set_list, where):
         set_clause = ", ".join(["%s = '%s'" % (x, Query.bind(set_list[x]))
                                 for x in set_list.keys()])
 
