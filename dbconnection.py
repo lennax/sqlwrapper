@@ -114,7 +114,8 @@ class Query(object):
     @staticmethod
     def bind(a):
         if a is None:
-            return ""
+            #return ""
+            return 'None'
         return str(a).replace("'", "''")
 
     @staticmethod
