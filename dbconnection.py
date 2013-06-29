@@ -112,11 +112,16 @@ class Query(object):
             raise e
 
     @staticmethod
-    def bind(a):
+    def bind(a, where=0):
         if a is None:
-            #return ""
-            return 'None'
-        return str(a).replace("'", "''")
+            a_list = ['null']
+            connector = "is "
+        else:
+            a_list = ["'", str(a).replace("'", "''"), "'"]
+            connector = "= "
+        if where:
+            a_list.insert(0, connector)
+        return "".join(a_list)
 
     @staticmethod
     def delta_to_seconds(dt):
@@ -174,8 +179,8 @@ class DBConnection(object):
         else:
             return q.exec_select(self.conn, return_type)
 
-    def update(self, from_clause, set_list, where):
-        set_clause = ", ".join(["%s = '%s'" % (k, Query.bind(v))
+    def update(self, from_clause="pdb", set_list=None, where=None):
+        set_clause = ", ".join(["%s = %s" % (k, Query.bind(v))
                                 for k, v in set_list.iteritems()])
 
         query = "update %s set %s %s" % (from_clause, set_clause,
@@ -191,12 +196,11 @@ class DBConnection(object):
 
         return q.exec_update(self.conn)
 
-    def insert(self, from_clause, columns):
+    def insert(self, from_clause="pdb", columns=None):
         column_list = ", ".join(columns.keys())
-        value_list = "', '".join([Query.bind(v) for v in columns.values()])
-        query = "insert into %s (%s) values ('%s')" % (from_clause,
+        value_list = ", ".join([Query.bind(v) for v in columns.values()])
+        query = "insert into %s (%s) values (%s)" % (from_clause,
                                                        column_list, value_list)
-
         q = Query(query)
         self.query_list.append(q)
 
@@ -223,7 +227,7 @@ class DBConnection(object):
             return ""
 
         if isinstance(where, dict):
-            return " where " + " and ".join(["%s = '%s'" % (k, Query.bind(v))
+            return " where " + " and ".join([" ".join(k, Query.bind(v, where=1))
                                              for k, v in where.iteritems()])
 
         if isinstance(where, basestring):
