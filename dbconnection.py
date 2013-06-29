@@ -227,7 +227,7 @@ class DBConnection(object):
             return ""
 
         if isinstance(where, dict):
-            return " where " + " and ".join([" ".join(k, Query.bind(v, where=1))
+            return " where " + " and ".join(["%s %s" % (k, Query.bind(v, where=1))
                                              for k, v in where.iteritems()])
 
         if isinstance(where, basestring):
