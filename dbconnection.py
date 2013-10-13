@@ -179,7 +179,7 @@ class DBConnection(object):
         else:
             return q.exec_select(self.conn, return_type)
 
-    def update(self, from_clause="pdb", set_list=None, where=None):
+    def update(self, from_clause, set_list=None, where=None):
         set_clause = ", ".join(["%s = %s" % (k, Query.bind(v))
                                 for k, v in set_list.iteritems()])
 
@@ -196,7 +196,7 @@ class DBConnection(object):
 
         return q.exec_update(self.conn)
 
-    def insert(self, from_clause="pdb", columns=None):
+    def insert(self, from_clause, columns=None):
         column_list = ", ".join(columns.keys())
         value_list = ", ".join([Query.bind(v) for v in columns.values()])
         query = "insert into %s (%s) values (%s)" % (from_clause,
@@ -232,3 +232,7 @@ class DBConnection(object):
 
         if isinstance(where, basestring):
             return " where " + where
+
+    @staticmethod
+    def in_clause(col, where):
+        return "%s in ('%s')" % (col, "', '".join(where))
