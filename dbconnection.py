@@ -4,7 +4,9 @@ import decimal
 
 
 class JSONCustomEncoder(json.JSONEncoder):
+
     """Encodes dates with ISO formatting"""
+
     def default(self, obj):
         if isinstance(obj, (datetime.date, datetime.datetime)):
             return obj.isoformat(' ')
@@ -13,6 +15,7 @@ class JSONCustomEncoder(json.JSONEncoder):
 
 
 class Query(object):
+
     def __init__(self, sql):
         self.sql = sql
         self.start_time = None
@@ -200,7 +203,7 @@ class DBConnection(object):
         column_list = ", ".join(columns.keys())
         value_list = ", ".join([Query.bind(v) for v in columns.values()])
         query = "insert into %s (%s) values (%s)" % (from_clause,
-                                                       column_list, value_list)
+                                                     column_list, value_list)
         q = Query(query)
         self.query_list.append(q)
 
