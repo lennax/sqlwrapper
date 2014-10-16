@@ -224,6 +224,29 @@ class DBConnection(object):
 
         return q.exec_update(self.conn)
 
+    def get_or_insert(self, table, ident_dict, id=None):
+        """Get or insert id from given table"""
+        id_val = self.get_existing_value(table, ident_dict, id)
+        if id_val is None:
+            self.insert(table, ident_dict)
+            id_val = self.get_existing_value(table, ident_dict, id)
+        assert id_val, ident_dict
+        return id_val
+
+    def get_existing_value(self, table, ident_dict, id=None):
+        """Get existing id for given table identifier"""
+        if id is None:
+            id = table + "id"
+        ret = self.select(from_clause=table, select_list = [id],
+                             where=ident_dict)
+        ret = list(ret)
+        nrow = len(ret)
+        if nrow > 1:
+            assert False, nrow
+        elif nrow == 1:
+            return ret[0][id]
+        # Default return of None indicates value is missing
+
     @staticmethod
     def where_clause(where):
         if not where:
